@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D正方体照片展示（默认速度）</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #1a1a1a;
+            perspective: 1500px;
+            overflow: hidden;
+        }
+
+        /* 正方体容器 - 恢复默认旋转动画（20秒/圈，可改数值调整速度） */
+        .cube-container {
+            position: relative;
+            width: 400px;
+            height: 400px;
+            transform-style: preserve-3d;
+            animation: rotateCube 20s infinite linear; /* 默认20秒旋转一周 */
+        }
+
+        /* 暂停动画的类（拖动时添加） */
+        .cube-container.paused {
+            animation-play-state: paused;
+        }
+
+        /* 正方体每个面的通用样式 */
+        .cube-face {
+            position: absolute;
+            width: 400px;
+            height: 400px;
+            border: 2px solid #fff;
+            backface-visibility: hidden;
+            overflow: hidden;
+        }
+
+        /* 六个面的3D定位 */
+        .face1 { transform: translateZ(200px); }
+        .face2 { transform: rotateY(90deg) translateZ(200px); }
+        .face3 { transform: rotateY(180deg) translateZ(200px); }
+        .face4 { transform: rotateY(-90deg) translateZ(200px); }
+        .face5 { transform: rotateX(90deg) translateZ(200px); }
+        .face6 { transform: rotateX(-90deg) translateZ(200px); }
+
+        /* 图片样式 */
+        .cube-face img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* 正方体旋转动画（默认速度核心） */
+        @keyframes rotateCube {
+            0% { transform: rotateX(0deg) rotateY(0deg); }
+            100% { transform: rotateX(360deg) rotateY(360deg); }
+        }
+
+        /* 音乐控件：完全隐藏（无进度条） */
+        audio {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        /* 拖动光标提示 */
+        .cube-container:hover { cursor: grab; }
+        .cube-container:active { cursor: grabbing; }
+    </style>
+</head>
+<body>
+    <!-- 音乐播放控件（隐藏，自动循环播放） -->
+    <audio id="bgMusic" src="./RiverFlowsInYou.mp3" loop autoplay></audio>
+
+    <!-- 3D正方体容器 -->
+    <div class="cube-container" id="cube">
+        <div class="cube-face face1">
+            <img src="./photo1.jpg" alt="照片1：猫咪">
+        </div>
+        <div class="cube-face face2">
+            <img src="./photo2.jpg" alt="照片2：重庆夜景">
+        </div>
+        <div class="cube-face face3">
+            <img src="./photo3.jpg" alt="照片3：海边">
+        </div>
+        <div class="cube-face face4">
+            <img src="./photo4.jpg" alt="照片4：猫咪自拍">
+        </div>
+        <div class="cube-face face5">
+            <img src="./photo5.jpg" alt="照片5：澳门">
+        </div>
+        <div class="cube-face face6">
+            <img src="./photo6.jpg" alt="照片6：两只猫咪">
+        </div>
+    </div>
+
+    <script>
+        // 核心变量
+        const cube = document.getElementById('cube');
+        const bgMusic = document.getElementById('bgMusic');
+
+        // 1. 解决音乐自动播放限制（页面首次点击后播放）
+        document.addEventListener('click', () => {
+            if (bgMusic.paused) {
+                bgMusic.play().catch(err => {
+                    console.log('音频需要手动点击页面播放:', err);
+                });
+            }
+        }, { once: true });
+
+        // 2. 鼠标拖动逻辑（拖动时暂停旋转，松开恢复）
+        let isDragging = false;
+        let startX, startY;
+        let currentX = 0, currentY = 0;
+
+        // 开始拖动：暂停动画，记录起始位置
+        cube.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            cube.classList.add('paused'); // 暂停CSS动画
+            startX = e.clientX - currentY;
+            startY = e.clientY - currentX;
+        });
+
+        // 拖动中：手动调整旋转角度
+        document.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            currentY = e.clientX - startX;
+            currentX = e.clientY - startY;
+            cube.style.transform = `rotateX(${currentX}deg) rotateY(${currentY}deg)`;
+        });
+
+        // 结束拖动：恢复动画
+        document.addEventListener('mouseup', () => {
+            if (isDragging) {
+                isDragging = false;
+                cube.classList.remove('paused'); // 恢复CSS动画
+                // 重置transform，让动画从当前角度继续默认旋转
+                cube.style.transform = '';
+            }
+        });
+    </script>
+</body>
+</html>
